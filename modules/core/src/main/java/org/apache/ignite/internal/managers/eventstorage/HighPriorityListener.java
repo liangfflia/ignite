@@ -21,5 +21,8 @@ package org.apache.ignite.internal.managers.eventstorage;
  *
  */
 public interface HighPriorityListener {
-    // No-op.
+    /**
+     * @return Order.
+     */
+    public int order();
 }

@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1251,6 +1252,16 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
      */
     static class Listeners {
         /** */
+        static Comparator<ListenerWrapper> ORDERED_CMP = new Comparator<ListenerWrapper>() {
+            @Override public int compare(ListenerWrapper lsnr1, ListenerWrapper lsnr2) {
+                int o1 = ((HighPriorityListener)lsnr1.listener()).order();
+                int o2 = ((HighPriorityListener)lsnr2.listener()).order();
+
+                return Integer.compare(o1, o2);
+            }
+        };
+
+        /** */
         private volatile List<ListenerWrapper> highPriorityLsnrs;
 
         /** */
@@ -1271,6 +1282,8 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
                     assert !newLsnrs.contains(lsnr) : lsnr;
 
                     newLsnrs.add(lsnr);
+
+                    Collections.sort(newLsnrs, ORDERED_CMP);
 
                     highPriorityLsnrs = newLsnrs;
                 }
@@ -1318,6 +1331,11 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
         abstract void onEvent(Event evt, Object[] params);
 
         /**
+         * @return Wrapped listener.
+         */
+        abstract Object listener();
+
+        /**
          * @return {@code True} if high priority listener.
          */
         abstract boolean highPriority();
@@ -1335,6 +1353,16 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
          */
         private LocalListenerWrapper(GridLocalEventListener lsnr) {
             this.lsnr = lsnr;
+        }
+
+        /** {@inheritDoc} */
+        @Override EventListener listener() {
+            return lsnr;
+        }
+
+        /** {@inheritDoc} */
+        @Override boolean highPriority() {
+            return lsnr instanceof HighPriorityListener;
         }
 
         /** {@inheritDoc} */
@@ -1359,11 +1387,6 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
         @Override public int hashCode() {
             return lsnr.hashCode();
         }
-
-        /** {@inheritDoc} */
-        @Override boolean highPriority() {
-            return lsnr instanceof HighPriorityListener;
-        }
     }
 
     /**
@@ -1378,6 +1401,16 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
          */
         private DiscoveryListenerWrapper(DiscoveryEventListener lsnr) {
             this.lsnr = lsnr;
+        }
+
+        /** {@inheritDoc} */
+        @Override EventListener listener() {
+            return lsnr;
+        }
+
+        /** {@inheritDoc} */
+        @Override boolean highPriority() {
+            return lsnr instanceof HighPriorityListener;
         }
 
         /** {@inheritDoc} */
@@ -1404,11 +1437,6 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
         @Override public int hashCode() {
             return lsnr.hashCode();
         }
-
-        /** {@inheritDoc} */
-        @Override boolean highPriority() {
-            return lsnr instanceof HighPriorityListener;
-        }
     }
 
     /**
@@ -1425,10 +1453,8 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
             this.lsnr = (IgnitePredicate<Event>)lsnr;
         }
 
-        /**
-         * @return User listener.
-         */
-        private IgnitePredicate<? extends Event> listener() {
+        /** {@inheritDoc} */
+        public IgnitePredicate<? extends Event> listener() {
             return lsnr;
         }
 

@@ -3746,11 +3746,17 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter implements Communicati
      *
      */
     private class DiscoveryListener implements GridLocalEventListener, HighPriorityListener {
+        /** {@inheritDoc} */
         @Override public void onEvent(Event evt) {
             assert evt instanceof DiscoveryEvent : evt;
             assert evt.type() == EVT_NODE_LEFT || evt.type() == EVT_NODE_FAILED ;
 
             onNodeLeft(((DiscoveryEvent)evt).eventNode().id());
+        }
+
+        /** {@inheritDoc} */
+        @Override public int order() {
+            return 0;
         }
     }
 
